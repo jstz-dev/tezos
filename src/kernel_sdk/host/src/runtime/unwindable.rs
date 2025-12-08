@@ -227,4 +227,12 @@ impl<R: Runtime> Runtime for UnwindableRuntime<R> {
     fn runtime_version(&self) -> Result<String, RuntimeError> {
         self.runtime.read().unwrap().runtime_version()
     }
+
+    unsafe fn reveal(
+        &self,
+        request: &[u8],
+        response: &mut [u8],
+    ) -> Result<usize, RuntimeError> {
+        self.runtime.read().unwrap().reveal(request, response)
+    }
 }

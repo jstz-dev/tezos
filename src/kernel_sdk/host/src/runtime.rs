@@ -242,6 +242,19 @@ pub trait Runtime {
     /// The runtime_version the kernel is using.
     #[cfg(feature = "alloc")]
     fn runtime_version(&self) -> Result<String, RuntimeError>;
+
+    /// Loads the result of a raw reveal request to memory.
+    /// The response contents is trimmed at `REVEAL_REQUEST_MAX_SIZE`.
+    ///
+    /// # Safety
+    ///
+    /// The first value in the request is used as a tag to determine the kind of reveal request,
+    /// and the kernel host should be able to handle this accordingly.
+    unsafe fn reveal(
+        &self,
+        request: &[u8],
+        response: &mut [u8],
+    ) -> Result<usize, RuntimeError>;
 }
 
 const REBOOT_PATH: RefPath = RefPath::assert_from(b"/kernel/env/reboot");
@@ -734,6 +747,24 @@ where
         // SAFETY: This storage can only contains valid version string which are utf8 safe.
         let version = unsafe { alloc::string::String::from_utf8_unchecked(bytes) };
         Ok(version)
+    }
+
+    unsafe fn reveal(
+        &self,
+        request: &[u8],
+        response: &mut [u8],
+    ) -> Result<usize, RuntimeError> {
+        let res = SmartRollupCore::reveal(
+            self,
+            request.as_ptr(),
+            request.len(),
+            response.as_mut_ptr(),
+            response.len(),
+        );
+        match Error::wrap(res) {
+            Ok(size) => Ok(size),
+            Err(e) => Err(RuntimeError::HostErr(e)),
+        }
     }
 }
 

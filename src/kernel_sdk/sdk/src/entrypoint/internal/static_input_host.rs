@@ -220,4 +220,13 @@ impl<R: Runtime> Runtime for StaticInputHost<'_, R> {
     fn reveal_dal_parameters(&self) -> RollupDalParameters {
         self.host.reveal_dal_parameters()
     }
+
+    #[inline(always)]
+    unsafe fn reveal(
+        &self,
+        request: &[u8],
+        response: &mut [u8],
+    ) -> Result<usize, RuntimeError> {
+        self.host.reveal(request, response)
+    }
 }
